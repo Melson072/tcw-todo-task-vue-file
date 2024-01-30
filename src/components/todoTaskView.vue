@@ -43,7 +43,6 @@
         </div>
     </div>
 </template>
-  
 <script>
 import { taskService } from '@/services/taskService.js';
 import axios from 'axios';
@@ -74,6 +73,7 @@ export default {
                 this.tasks = response.data.tasks;
             } catch (error) {
                 console.error('Error fetching tasks:', error);
+                this.handleRequestError(error);
             }
         },
         async addTask() {
@@ -85,13 +85,8 @@ export default {
                     this.newTaskDescription = '';
                     this.showSuccessMessage('Task added successfully');
                 } catch (error) {
-                    this.showErrorMessage('Failed to add task');
-                    if (error.response && error.response.status === 422) {
-                        const errorMessage = error.response.data.message || 'Failed to add task';
-                        this.showErrorMessage(errorMessage);
-                    } else {
-                        this.showErrorMessage('Failed to add task');
-                    }
+                    console.error('Error adding task:', error);
+                    this.handleRequestError(error);
                 }
             } else {
                 this.showErrorMessage('Please enter title and description');
@@ -114,13 +109,8 @@ export default {
                     this.closeModal();
                     this.showSuccessMessage('Task updated successfully');
                 } catch (error) {
-                    this.showErrorMessage('Failed to add task');
-                    if (error.response && error.response.status === 422) {
-                        const errorMessage = error.response.data.message || 'Failed to add task';
-                        this.showErrorMessage(errorMessage);
-                    } else {
-                        this.showErrorMessage('Failed to add task');
-                    }
+                    console.error('Error updating task:', error);
+                    this.handleRequestError(error);
                 }
             }
         },
@@ -132,7 +122,7 @@ export default {
                     this.showSuccessMessage('Task deleted successfully');
                 } catch (error) {
                     console.error('Error deleting task:', error);
-                    this.showErrorMessage('Failed to delete task');
+                    this.handleRequestError(error);
                 }
             }
         },
@@ -144,7 +134,7 @@ export default {
                     this.showSuccessMessage('Task status changed successfully');
                 } catch (error) {
                     console.error('Error changing task status:', error);
-                    this.showErrorMessage('Failed to change task status');
+                    this.handleRequestError(error);
                 }
             }
             this.completedTasks[index] = true;
@@ -191,7 +181,17 @@ export default {
                         this.showErrorMessage('Failed to logout');
                     });
             }
-
+        },
+        handleRequestError(error) {
+            if (error.response) {
+                if (error.response.status === 422) {
+                    this.showErrorMessage(error.response.data.message || 'Failed to perform the operation');
+                } else if (error.response.status === 500) {
+                    this.showErrorMessage('Internal server error. Please try again later.');
+                }
+            } else {
+                this.showErrorMessage('An unexpected error occurred. Please try again later.');
+            }
         }
     }
 };
